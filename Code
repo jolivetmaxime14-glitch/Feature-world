@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <title>Feature World: Infinite Chaos Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: opacity 0.5s;
+        }
+        
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: #ff006e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Share Modal */
+        #share-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 600;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        #share-modal.show {
+            display: flex;
+        }
+        
+        .share-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            max-width: 90%;
+            border: 2px solid #8338ec;
+        }
+        
+        #qrcode {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .share-link {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 12px;
+            word-break: break-all;
+            color: #3a86ff;
+        }
+        
+        .share-btn {
+            background: linear-gradient(135deg, #8338ec, #3a86ff);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+            width: 100%;
+        }
+        
+        /* Install Prompt */
+        #install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(200%);
+            background: linear-gradient(135deg, #ff006e, #8338ec);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            z-index: 300;
+            transition: transform 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            box-shadow: 0 4px 20px rgba(131, 56, 236, 0.5);
+        }
+        
+        #install-prompt.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        /* UI Elements */
+        #notification {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: linear-gradient(135deg, #ff006e, #8338ec, #3a86ff);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 100;
+            transition: transform 0.3s;
+            pointer-events: none;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        #notification.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        #settings-btn, #share-btn-header {
+            position: fixed;
+            top: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        #settings-btn { left: 20px; }
+        #share-btn-header { right: 20px; }
+        
+        #settings-menu {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            background: rgba(0,0,0,0.95);
+            border: 2px solid #8338ec;
+            border-radius: 15px;
+            padding: 10px;
+            z-index: 160;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        #settings-menu.show { display: flex; }
+        
+        .settings-option {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #skills-panel, #skins-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(0,0,0,0.98);
+            border: 3px solid #8338ec;
+            border-radius: 20px;
+            padding: 20px;
+            z-index: 500;
+            width: 95vw;
+            max-width: 500px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease-out;
+            backdrop-filter: blur(20px);
+        }
+        
+        #skins-panel { border-color: #ff006e; }
+        #skills-panel.show, #skins-panel.show { transform: translate(-50%, -50%) scale(1); }
+        
+        #skills-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 499;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(5px);
+        }
+        
+        #skills-backdrop.show { display: block; opacity: 1; }
+        
+        #skills-panel h2, #skins-panel h2 {
+            color: #ff006e;
+            text-align: center;
+            margin-bottom: 15px;
+            margin-top: 10px;
+            font-size: 24px;
+        }
+        
+        #skills-list, #skins-grid {
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 5px;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        #skins-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 10px;
+        }
+        
+        @media (min-width: 400px) {
+            #skins-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        
+        .skin-card {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .skin-card:active { transform: scale(0.95); }
+        .skin-card.locked { opacity: 0.5; filter: grayscale(1); }
+        .skin-card.selected { border-color: #4CAF50; box-shadow: 0 0 15px rgba(76, 175, 80, 0.5); }
+        .skin-card.hidden-skin:not(.locked) { 
+            border-color: #ffd700; 
+            animation: glow 2s infinite;
+            background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,140,0,0.1));
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px #ffd700; }
+            50% { box-shadow: 0 0 20px #ffd700, 0 0 30px #ff8c00; }
+        }
+        
+        .skin-icon { font-size: 40px; margin-bottom: 8px; }
+        .skin-name { color: white; font-size: 12px; font-weight: bold; }
+        .skin-rarity { font-size: 9px; margin-top: 5px; padding: 2px 6px; border-radius: 8px; display: inline-block; text-transform: uppercase; }
+        .rarity-common { background: #888; color: white; }
+        .rarity-rare { background: #3a86ff; color: white; }
+        .rarity-epic { background: #8338ec; color: white; }
+        .rarity-legendary { background: linear-gradient(90deg, #ffd700, #ff8c00); color: black; }
+        .rarity-secret { background: linear-gradient(90deg, #ff006e, #8338ec); color: white; }
+        
+        .skill-item {
+            margin: 10px 0;
+            color: white;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .skill-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .skill-toggle {
+            background: #444;
+            border: none;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .skill-toggle.active { background: #4CAF50; }
+        .skill-toggle.inactive { background: #f44336; }
+        
+        .skill-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .skill-fill {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            transition: width 0.5s;
+        }
+        
+        .close-panel {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 501;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #active-boosts {
+            position: fixed;
+            top: 80px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 100;
+            max-width: 150px;
+        }
+        
+        .boost-indicator {
+            background: rgba(0,0,0,0.8);
+            border: 2px solid;
+            border-radius: 12px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .malus-indicator {
+            background: rgba(50, 0, 0, 0.9);
+            border-color: #ff4444;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        #parkour-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: black;
+            padding: 20px 40px;
+            border-radius: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            z-index: 90;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            text-align: center;
+        }
+        
+        #parkour-indicator.show { opacity: 1; }
+        
+        /* Mobile-optimized Controls */
+        #joystick-zone {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            width: 140px;
+            height: 140px;
+            background: rgba(255,255,255,0.08);
+            border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            z-index: 50;
+            touch-action: none;
+        }
+        
+        #joystick-knob {
+            position: absolute;
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #ff006e, #8338ec);
+            border: 3px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+        
+        #joystick-knob.active {
+            background: linear-gradient(135deg, #ff4d00, #ff006e);
+            transform: translate(-50%, -50%) scale(0.9);
+        }
+        
+        #jump-btn {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, #ff006e, #ff4d00);
+            border: 3px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 50;
+            box-shadow: 0 4px 20px rgba(255,0,110,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #jump-btn:active { transform: scale(0.95); }
+        
+        #instructions {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: white;
+            padding: 40px 20px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow-y: auto;
+        }
+        
+        #instructions h1 {
+            color: #ff006e;
+            margin-bottom: 20px;
+            font-size: 28px;
+            text-shadow: 0 0 20px rgba(255,0,110,0.5);
+        }
+        
+        .feature-list {
+            text-align: left;
+            margin: 20px 0;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        
+        .feature-list li {
+            margin: 10px 0;
+            list-style: none;
+        }
+        
+        #start-btn {
+            margin-top: 30px;
+            padding: 18px 50px;
+            background: linear-gradient(135deg, #8338ec, #3a86ff);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(131,56,236,0.5);
+            transition: transform 0.2s;
+        }
+        
+        #start-btn:active { transform: scale(0.95); }
+        
+        .hidden { display: none !important; }
+        
+        #chrome-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, #c0c0c0, #ffffff, #c0c0c0);
+            color: black;
+            padding: 30px;
+            border-radius: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 400;
+            transition: transform 0.5s;
+            text-align: center;
+            max-width: 90%;
+        }
+        
+        #chrome-notification.show { transform: translate(-50%, -50%) scale(1); }
+        
+        /* Performance indicator */
+        #fps-counter {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: #0f0;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-family: monospace;
+            z-index: 50;
+            display: none;
+        }
+        
+        /* Orientation warning */
+        #orientation-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: white;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        @media (orientation: portrait) and (max-height: 500px) {
+            #orientation-warning { display: flex; }
+        }
+        
+        .fullscreen-btn {
+            position: fixed;
+            bottom: 130px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <div>Chargement...</div>
+        <div style="font-size: 12px; margin-top: 10px; opacity: 0.7;">Préparation du monde infini</div>
+    </div>
+
+    <!-- Orientation Warning -->
+    <div id="orientation-warning">
+        <div style="font-size: 60px; margin-bottom: 20px;">📱</div>
+        <h2>Tournez votre téléphone</h2>
+        <p>Pour une meilleure expérience, utilisez le mode paysage</p>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="share-modal">
+        <div class="share-content">
+            <h2 style="color: #ff006e; margin-bottom: 20px;">🌐 Partager le jeu</h2>
+            <div id="qrcode"></div>
+            <div class="share-link" id="share-url">https://featureworld.game</div>
+            <button class="share-btn" onclick="copyLink()">📋 Copier le lien</button>
+            <button class="share-btn" onclick="shareNative()" style="background: linear-gradient(135deg, #ff006e, #8338ec);">
+                📤 Partager
+            </button>
+            <button class="share-btn" onclick="closeShare()" style="background: #444;">❌ Fermer</button>
+        </div>
+    </div>
+
+    <!-- Install Prompt -->
+    <div id="install-prompt" onclick="installApp()">
+        <span>📲</span>
+        <span>Installer Feature World</span>
+    </div>
+
+    <div id="canvas-container"></div>
+    
+    <button id="settings-btn" class="hidden">⚙️</button>
+    <button id="share-btn-header" class="hidden" onclick="openShare()">🔗</button>
+    <button id="fullscreen-btn" class="hidden fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+    
+    <div id="settings-menu">
+        <button class="settings-option" id="menu-main-btn">🏠 Menu Principal</button>
+        <button class="settings-option" id="menu-skills-btn">📊 Compétences</button>
+        <button class="settings-option" id="menu-skins-btn">🎨 Skins</button>
+        <button class="settings-option" id="menu-share-btn">🔗 Partager</button>
+        <button class="settings-option" id="menu-install-btn" style="display:none;">📲 Installer</button>
+        <button class="settings-option" id="menu-close-btn">❌ Fermer</button>
+    </div>
+    
+    <div id="skills-backdrop" onclick="closeAllPanels()"></div>
+    
+    <div id="skills-panel">
+        <button class="close-panel" onclick="closeAllPanels()">×</button>
+        <h2>📊 Compétences</h2>
+        <div id="skills-list"></div>
+    </div>
+
+    <div id="skins-panel">
+        <button class="close-panel" onclick="closeAllPanels()">×</button>
+        <h2>🎨 Skins</h2>
+        <div id="skins-grid"></div>
+    </div>
+    
+    <div id="notification"></div>
+    <div id="active-boosts"></div>
+    <div id="parkour-indicator">🏁 ZONE PARKOUR 🏁</div>
+    <div id="fps-counter">FPS: 60</div>
+    
+    <div id="chrome-notification">
+        ✨ TRANSFORMATION CHROMATIQUE ! ✨<br>
+        <small>Toutes les compétences au maximum !</small>
+    </div>
+    
+    <div id="joystick-zone" class="hidden">
+        <div id="joystick-knob"></div>
+    </div>
+    
+    <button id="jump-btn" class="hidden">SAUT</button>
+    
+    <div id="instructions">
+        <h1>🎮 Feature World</h1>
+        <div style="font-size: 18px; color: #8338ec; margin-bottom: 20px;">Infinite Chaos Edition</div>
+        
+        <ul class="feature-list">
+            <li>🕹️ <strong>Joystick</strong> - Déplacez-vous</li>
+            <li>👆 <strong>Bouton SAUT</strong> - Sautez</li>
+            <li>💎 <strong>Collectez</strong> des boosts</li>
+            <li>🎨 <strong>Trouvez</strong> les skins cachés</li>
+            <li>🏆 <strong>Complétez</strong> les parkours</li>
+        </ul>
+        
+        <div style="font-size: 14px; opacity: 0.8; margin: 20px 0;">
+            📱 Optimisé pour mobile<br>
+            🌐 Jouez n'importe où, n'importe quand
+        </div>
+        
+        <button id="start-btn">▶ JOUER</button>
+        
+        <div style="margin-top: 30px; font-size: 12px; opacity: 0.6;">
+            <button onclick="openShare()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer;">
+                🔗 Partager avec des amis
+            </button>
+        </div>
+    </div>
+
+    <!-- QRCode.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Game State
+        const state = {
+            isPlaying: false,
+            isJumping: false,
+            speed: 0.15,
+            normalSpeed: 0.15,
+            baseSpeed: 0.12,
+            jumpForce: 0.3,
+            baseJumpForce: 0.25,
+            rotationSpeed: 0.03,
+            characterRotation: 0,
+            currentScale: 1,
+            
+            skills: {
+                speed: { level: 1, max: 100, color: '#ff6b6b', enabled: true },
+                jump: { level: 1, max: 100, color: '#ffd93d', enabled: true },
+                invisible: { level: 1, max: 100, color: '#6bcf7f', enabled: true },
+                size: { level: 1, max: 100, color: '#c084fc', enabled: true }
+            },
+            
+            isChrome: false,
+            inParkour: false,
+            activeEffects: new Map(),
+            currentSkin: 'default',
+            unlockedSkins: ['default'],
+            hiddenSkinsFound: new Set()
+        };
+
+        const SKINS = {
+            default: { name: 'Classique', icon: '🤎', rarity: 'common', bodyColor: 0x8B4513, headColor: 0x32CD32, metalness: 0, roughness: 0.8, hidden: false, description: 'Le skin de base' },
+            golden: { name: 'Golden', icon: '🏆', rarity: 'legendary', bodyColor: 0xFFD700, headColor: 0xFFA500, metalness: 0.8, roughness: 0.2, hidden: true, description: 'Zone parkour' },
+            crystal: { name: 'Cristal', icon: '💎', rarity: 'epic', bodyColor: 0x00FFFF, headColor: 0x87CEEB, metalness: 0.1, roughness: 0, transparent: true, opacity: 0.8, hidden: true, description: 'Sous l\'eau' },
+            shadow: { name: 'Ombre', icon: '👤', rarity: 'rare', bodyColor: 0x2C2C2C, headColor: 0x1a1a1a, metalness: 0.5, roughness: 0.5, hidden: true, description: 'Hauteurs' },
+            galaxy: { name: 'Galaxie', icon: '🌌', rarity: 'secret', bodyColor: 0x4B0082, headColor: 0x9400D3, metalness: 0.5, roughness: 0.2, hidden: true, description: 'Dans l\'espace' },
+            cyber: { name: 'Cyber', icon: '🤖', rarity: 'epic', bodyColor: 0xFF00FF, headColor: 0x00FFFF, metalness: 0.9, roughness: 0.1, emissive: 0xFF00FF, emissiveIntensity: 0.5, hidden: true, description: 'Niveau 50 vitesse' },
+            lava: { name: 'Magma', icon: '🔥', rarity: 'rare', bodyColor: 0xFF4500, headColor: 0xFFD700, metalness: 0.3, roughness: 0.8, emissive: 0xFF4500, emissiveIntensity: 0.3, hidden: true, description: 'Volcan' },
+            ninja: { name: 'Ninja', icon: '🥷', rarity: 'epic', bodyColor: 0x000000, headColor: 0xFF0000, metalness: 0.2, roughness: 0.9, hidden: true, description: 'Niveau 50 invisibilité' },
+            chrome: { name: 'Chrome', icon: '✨', rarity: 'secret', bodyColor: 0xFFFFFF, headColor: 0xFFFFFF, metalness: 1, roughness: 0.1, hidden: false, description: 'Max tout' },
+            retro: { name: 'Retro', icon: '👾', rarity: 'rare', bodyColor: 0x00FF00, headColor: 0x000000, metalness: 0, roughness: 1, hidden: true, pixelated: true, description: 'Secret' }
+        };
+
+        const joystick = { active: false, deltaX: 0, deltaY: 0, maxRadius: 45 };
+        let walkCycle = 0, jumpVelocity = 0, isGrounded = true;
+        let character, terrainMesh, parkourZones = [], parkourPlatforms = [], hiddenSkinOrbs = [], collectibles = [], collectedBoosts = new Set(), clouds;
+        let deferredPrompt;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog = new THREE.Fog(0x87CEEB, 40, 180);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(50, 100, 50);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        scene.add(directionalLight);
+
+        // PWA Install
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-prompt').classList.add('show');
+            document.getElementById('menu-install-btn').style.display = 'flex';
+        });
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        document.getElementById('install-prompt').classList.remove('show');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // Share functionality
+        function openShare() {
+            const url = window.location.href;
+            document.getElementById('share-url').textContent = url;
+            
+            // Generate QR Code
+            const qrcodeDiv = document.getElementById('qrcode');
+            qrcodeDiv.innerHTML = '';
+            new QRCode(qrcodeDiv, {
+                text: url,
+                width: 180,
+                height: 180,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            
+            document.getElementById('share-modal').classList.add('show');
+            closeAllPanels();
+        }
+
+        function closeShare() {
+            document.getElementById('share-modal').classList.remove('show');
+        }
+
+        function copyLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                showNotification('📋 Lien copié !');
+            });
+        }
+
+        function shareNative() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Feature World',
+                    text: 'Rejoins-moi dans Feature World ! 🎮',
+                    url: window.location.href
+                }).catch(() => {});
+            } else {
+                copyLink();
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Noise functions
+        function noise(x, z) {
+            const n = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
+            return n - Math.floor(n);
+        }
+
+        function smoothNoise(x, z) {
+            const i = Math.floor(x), j = Math.floor(z);
+            const u = x - i, v = z - j;
+            const u2 = u * u * (3 - 2 * u), v2 = v * v * (3 - 2 * v);
+            return (1 - u2) * (1 - v2) * noise(i, j) + u2 * (1 - v2) * noise(i + 1, j) + 
+                   (1 - u2) * v2 * noise(i, j + 1) + u2 * v2 * noise(i + 1, j + 1);
+        }
+
+        function getHeightAt(x, z) {
+            let total = 0, amplitude = 1, frequency = 0.008, maxValue = 0;
+            for (let i = 0; i < 4; i++) {
+                total += smoothNoise(x * frequency + 1000, z * frequency + 1000) * amplitude;
+                maxValue += amplitude;
+                amplitude *= 0.5;
+                frequency *= 2;
+            }
+            return ((total / maxValue) - 0.3) * 15;
+        }
+
+        function generateSeamlessTerrain() {
+            if (terrainMesh) { scene.remove(terrainMesh); terrainMesh.geometry.dispose(); terrainMesh.material.dispose(); }
+            const geometry = new THREE.PlaneGeometry(200, 200, 128, 128);
+            const vertices = geometry.attributes.position.array;
+            for (let i = 0; i < vertices.length; i += 3) {
+                vertices[i + 2] = getHeightAt(vertices[i], vertices[i + 1]);
+            }
+            geometry.attributes.position.needsUpdate = true;
+            geometry.computeVertexNormals();
+            const material = new THREE.MeshLambertMaterial({ color: 0x5a8f6b });
+            terrainMesh = new THREE.Mesh(geometry, material);
+            terrainMesh.rotation.x = -Math.PI / 2;
+            terrainMesh.receiveShadow = true;
+            scene.add(terrainMesh);
+        }
+
+        function createCharacter() {
+            const group = new THREE.Group();
+            const skin = SKINS[state.currentSkin];
+            
+            const bodyMat = new THREE.MeshStandardMaterial({ 
+                color: skin.bodyColor, metalness: skin.metalness || 0, roughness: skin.roughness || 0.8,
+                transparent: skin.transparent || false, opacity: skin.opacity || 1,
+                emissive: skin.emissive || 0x000000, emissiveIntensity: skin.emissiveIntensity || 0
+            });
+            
+            const headMat = new THREE.MeshStandardMaterial({ 
+                color: skin.headColor, metalness: skin.metalness || 0, roughness: skin.roughness || 0.8,
+                transparent: skin.transparent || false, opacity: skin.opacity || 1,
+                emissive: skin.emissive || 0x000000, emissiveIntensity: skin.emissiveIntensity || 0
+            });
+            
+            const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 1.2, 16), bodyMat);
+            torso.position.y = 1.3;
+            torso.castShadow = true;
+            group.add(torso);
+            
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.45, 32, 32), headMat);
+            head.position.y = 0.85;
+            head.castShadow = true;
+            torso.add(head);
+            
+            const armGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.9, 12);
+            const leftArmGroup = new THREE.Group();
+            leftArmGroup.position.set(-0.35, 0.4, 0);
+            const leftArm = new THREE.Mesh(armGeo, bodyMat);
+            leftArm.position.y = -0.45;
+            leftArm.castShadow = true;
+            leftArmGroup.add(leftArm);
+            torso.add(leftArmGroup);
+            
+            const rightArmGroup = new THREE.Group();
+            rightArmGroup.position.set(0.35, 0.4, 0);
+            const rightArm = new THREE.Mesh(armGeo, bodyMat);
+            rightArm.position.y = -0.45;
+            rightArm.castShadow = true;
+            rightArmGroup.add(rightArm);
+            torso.add(rightArmGroup);
+            
+            const legGeo = new THREE.CylinderGeometry(0.1, 0.08, 1, 12);
+            const leftLegGroup = new THREE.Group();
+            leftLegGroup.position.set(-0.15, -0.6, 0);
+            const leftLeg = new THREE.Mesh(legGeo, bodyMat);
+            leftLeg.position.y = -0.5;
+            leftLeg.castShadow = true;
+            leftLegGroup.add(leftLeg);
+            torso.add(leftLegGroup);
+            
+            const rightLegGroup = new THREE.Group();
+            rightLegGroup.position.set(0.15, -0.6, 0);
+            const rightLeg = new THREE.Mesh(legGeo, bodyMat);
+            rightLeg.position.y = -0.5;
+            rightLeg.castShadow = true;
+            rightLegGroup.add(rightLeg);
+            torso.add(rightLegGroup);
+            
+            return { mesh: group, torso, leftArmGroup, rightArmGroup, leftLegGroup, rightLegGroup, head };
+        }
+
+        function createClouds() {
+            const cloudGroup = new THREE.Group();
+            for (let i = 0; i < 15; i++) {
+                const cloud = new THREE.Group();
+                const geometry = new THREE.SphereGeometry(1, 8, 8);
+                const material = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
+                for (let j = 0; j < 4; j++) {
+                    const puff = new THREE.Mesh(geometry, material);
+                    puff.position.set(Math.random() * 3 - 1.5, Math.random() * 1, Math.random() * 2 - 1);
+                    puff.scale.setScalar(0.6 + Math.random() * 0.6);
+                    cloud.add(puff);
+                }
+                cloud.position.set(Math.random() * 400 - 200, 30 + Math.random() * 15, Math.random() * 400 - 200);
+                cloudGroup.add(cloud);
+            }
+            scene.add(cloudGroup);
+            return cloudGroup;
+        }
+
+        function createParkourZone(centerX, centerZ) {
+            const group = new THREE.Group();
+            const platforms = [];
+            
+            for (let i = 0; i < 8; i++) {
+                const progress = i / 7;
+                const platformY = 8 + progress * 8 + Math.sin(progress * Math.PI) * 2;
+                const platformX = centerX + i * 6 + (Math.random() - 0.5) * 2;
+                const platformZ = centerZ + Math.sin(progress * Math.PI * 2) * 4 + (Math.random() - 0.5) * 2;
+                
+                const platform = new THREE.Mesh(
+                    new THREE.CylinderGeometry(5, 5, 1.2, 24),
+                    new THREE.MeshPhongMaterial({ color: 0xffd700, emissive: 0xff8c00, emissiveIntensity: 0.4 })
+                );
+                platform.position.set(platformX, platformY, platformZ);
+                platform.castShadow = true;
+                platform.userData = { isPlatform: true, topY: platformY + 0.6, radius: 5 };
+                group.add(platform);
+                platforms.push(platform);
+            }
+            
+            const finalX = centerX + 53, finalZ = centerZ, finalY = 15;
+            const finalPlatform = new THREE.Mesh(
+                new THREE.CylinderGeometry(12, 12, 1.5, 24),
+                new THREE.MeshPhongMaterial({ color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 0.6 })
+            );
+            finalPlatform.position.set(finalX, finalY, finalZ);
+            finalPlatform.userData = { isPlatform: true, topY: finalY + 0.75, radius: 12, isReward: true };
+            group.add(finalPlatform);
+            platforms.push(finalPlatform);
+            
+            const rewardOrb = new THREE.Mesh(
+                new THREE.SphereGeometry(2.5, 32, 32),
+                new THREE.MeshPhongMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1, transparent: true, opacity: 0.9 })
+            );
+            rewardOrb.position.set(finalX, finalY + 4, finalZ);
+            group.add(rewardOrb);
+            
+            scene.add(group);
+            parkourZones.push({ mesh: group, centerX, centerZ, finalX, finalZ, finalY, platforms, collected: false, rewardOrb });
+            parkourPlatforms.push(...platforms);
+        }
+
+        function spawnParkourZones() {
+            [40, 80, 120, 160].forEach((dist, i) => {
+                const angle = [0, Math.PI/2, Math.PI, 3*Math.PI/2][i] + (Math.random() - 0.5) * 0.3;
+                createParkourZone(Math.cos(angle) * dist, Math.sin(angle) * dist);
+            });
+        }
+
+        function createSkinOrb(x, y, z, skinId, floating) {
+            const skin = SKINS[skinId];
+            const geometry = new THREE.IcosahedronGeometry(1.5, 0);
+            const material = new THREE.MeshPhongMaterial({
+                color: skin.bodyColor, emissive: skin.emissive || skin.bodyColor, emissiveIntensity: 0.5,
+                metalness: skin.metalness || 0, roughness: skin.roughness || 0.5,
+                transparent: skin.transparent || false, opacity: skin.opacity || 1, wireframe: skin.pixelated || false
+            });
+            const orb = new THREE.Mesh(geometry, material);
+            orb.position.set(x, y, z);
+            orb.userData = { isSkinOrb: true, skinId, originalY: y, floating, rotationSpeed: 0.02 };
+            
+            if (skin.rarity === 'secret' || skin.rarity === 'legendary') {
+                const aura = new THREE.Mesh(
+                    new THREE.RingGeometry(2, 2.5, 32),
+                    new THREE.MeshBasicMaterial({ color: skin.bodyColor, transparent: true, opacity: 0.3, side: THREE.DoubleSide })
+                );
+                aura.rotation.x = Math.PI / 2;
+                orb.add(aura);
+                orb.userData.aura = aura;
+            }
+            scene.add(orb);
+            hiddenSkinOrbs.push(orb);
+        }
+
+        function spawnHiddenSkins() {
+            // Crystal
+            for (let i = 0; i < 100; i++) {
+                const angle = Math.random() * Math.PI * 2, dist = 30 + Math.random() * 100;
+                const x = Math.cos(angle) * dist, z = Math.sin(angle) * dist, h = getHeightAt(x, z);
+                if (h < -2) { createSkinOrb(x, h + 1, z, 'crystal'); break; }
+            }
+            // Shadow
+            for (let i = 0; i < 100; i++) {
+                const angle = Math.random() * Math.PI * 2, dist = 30 + Math.random() * 100;
+                const x = Math.cos(angle) * dist, z = Math.sin(angle) * dist, h = getHeightAt(x, z);
+                if (h > 8) { createSkinOrb(x, h + 3, z, 'shadow'); break; }
+            }
+            // Galaxy
+            createSkinOrb(50, 80, 50, 'galaxy', true);
+            // Lava
+            for (let i = 0; i < 100; i++) {
+                const angle = Math.random() * Math.PI * 2, dist = 30 + Math.random() * 100;
+                const x = Math.cos(angle) * dist, z = Math.sin(angle) * dist, h = getHeightAt(x, z);
+                if (h > 8) { createSkinOrb(x + 10, h + 2, z + 10, 'lava'); break; }
+            }
+            // Retro
+            createSkinOrb(42, getHeightAt(42, 42) + 2, 42, 'retro');
+        }
+
+        const boostTypes = [
+            { color: 0xcc4444, effect: 'speedBoost', name: 'Vitesse +', skill: 'speed', desc: '⚡ Vitesse +1', isSkill: true },
+            { color: 0xcccc44, effect: 'jumpBoost', name: 'Saut +', skill: 'jump', desc: '🚀 Saut +1', isSkill: true },
+            { color: 0x44aa44, effect: 'invisibleBoost', name: 'Invisible +', skill: 'invisible', desc: '👻 Invisible +1', isSkill: true },
+            { color: 0xaa44aa, effect: 'sizeBoost', name: 'Taille +', skill: 'size', desc: '💎 Taille +1', isSkill: true },
+            { color: 0x4444cc, effect: 'slow', name: 'Lenteur', desc: '🐌 Lent', isSkill: false, duration: 6000 },
+            { color: 0xcc44cc, effect: 'tiny', name: 'Mini', desc: '🔽 Petit', isSkill: false, duration: 6000 },
+            { color: 0xff6600, effect: 'giant', name: 'Géant', desc: '🔼 Gros', isSkill: false, duration: 6000 }
+        ];
+
+        function createCollectible(x, z, id) {
+            if (collectedBoosts.has(id)) return;
+            const type = boostTypes[Math.floor(Math.random() * boostTypes.length)];
+            const geometry = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: type.color, emissive: type.color, emissiveIntensity: 0.3, shininess: 80
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            const terrainH = getHeightAt(x, z);
+            const y = Math.max(terrainH, 3) + 2 + Math.random() * 2;
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.userData = { type, originalY: y, rotationSpeed: 0.02, bobSpeed: 0.0015, id, collected: false };
+            scene.add(mesh);
+            collectibles.push(mesh);
+        }
+
+        function spawnCollectibles() {
+            const px = character.mesh.position.x, pz = character.mesh.position.z;
+            for (let i = 0; i < 5; i++) {
+                const angle = Math.random() * Math.PI * 2, dist = 20 + Math.random() * 50;
+                createCollectible(px + Math.cos(angle) * dist, pz + Math.sin(angle) * dist, `boost_${Date.now()}_${i}`);
+            }
+        }
+
+        function showNotification(text, color) {
+            const notif = document.getElementById('notification');
+            notif.textContent = text;
+            notif.style.background = color || 'linear-gradient(135deg, #ff006e, #8338ec, #3a86ff)';
+            notif.classList.add('show');
+            setTimeout(() => notif.classList.remove('show'), 2500);
+        }
+
+        function unlockSkin(skinId) {
+            if (state.unlockedSkins.includes(skinId)) return;
+            state.unlockedSkins.push(skinId);
+            state.hiddenSkinsFound.add(skinId);
+            const skin = SKINS[skinId];
+            showNotification(`🎉 SKIN: ${skin.name}!`, 'linear-gradient(135deg, #ffd700, #ff8c00)');
+            if (['rare', 'epic', 'legendary', 'secret'].includes(skin.rarity)) {
+                setTimeout(() => changeSkin(skinId), 1500);
+            }
+            updateSkinsDisplay();
+        }
+
+        function changeSkin(skinId) {
+            if (!state.unlockedSkins.includes(skinId)) return;
+            state.currentSkin = skinId;
+            const skin = SKINS[skinId];
+            
+            if (skinId === 'chrome' || state.isChrome) {
+                state.isChrome = true;
+                const chromeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.1 });
+                character.mesh.traverse((child) => { if (child.isMesh) child.material = chromeMat; });
+                document.getElementById('chrome-notification').classList.add('show');
+                setTimeout(() => document.getElementById('chrome-notification').classList.remove('show'), 5000);
+            } else {
+                character.torso.material.color.setHex(skin.bodyColor);
+                character.torso.material.metalness = skin.metalness || 0;
+                character.torso.material.roughness = skin.roughness || 0.8;
+                character.torso.material.emissive.setHex(skin.emissive || 0x000000);
+                character.torso.material.emissiveIntensity = skin.emissiveIntensity || 0;
+                
+                character.head.material.color.setHex(skin.headColor);
+                character.head.material.metalness = skin.metalness || 0;
+                character.head.material.roughness = skin.roughness || 0.8;
+                character.head.material.emissive.setHex(skin.emissive || 0x000000);
+                character.head.material.emissiveIntensity = skin.emissiveIntensity || 0;
+            }
+            showNotification(`🎨 ${skin.name}!`, 'linear-gradient(135deg, #8338ec, #3a86ff)');
+            updateSkinsDisplay();
+        }
+
+        function addSkillLevel(skillName, levels) {
+            const skill = state.skills[skillName];
+            if (!skill || skill.level >= skill.max) return;
+            const oldLevel = skill.level;
+            skill.level = Math.min(skill.level + levels, skill.max);
+            if (skill.level > oldLevel) {
+                const names = { speed: '⚡ Vitesse', jump: '🦘 Saut', invisible: '👻 Invisibilité', size: '📏 Taille' };
+                showNotification(`+${skill.level - oldLevel} ${names[skillName]}!`, `linear-gradient(90deg,${skill.color},#fff)`);
+                updateSkillsDisplay();
+                applySkillEffects();
+                if (skillName === 'speed' && skill.level >= 50) unlockSkin('cyber');
+                if (skillName === 'invisible' && skill.level >= 50) unlockSkin('ninja');
+                if (Object.values(state.skills).every(s => s.level >= s.max) && !state.isChrome) {
+                    unlockSkin('chrome');
+                    changeSkin('chrome');
+                }
+            }
+        }
+
+        function applySkillEffects() {
+            state.baseSpeed = 0.12 + (state.skills.speed.enabled ? (state.skills.speed.level - 1) * 0.002 : 0);
+            state.baseJumpForce = 0.25 + (state.skills.jump.enabled ? (state.skills.jump.level - 1) * 0.003 : 0);
+            recalculateCurrentStats();
+        }
+
+        function recalculateCurrentStats() {
+            let scale = 1;
+            if (state.activeEffects.has('tiny')) scale = 0.3;
+            else if (state.activeEffects.has('giant')) scale = 3.0;
+            if (state.skills.size.enabled) scale += (state.skills.size.level - 1) * 0.01;
+            scale = Math.max(0.2, Math.min(scale, 5.0));
+            state.currentScale = scale;
+            character.mesh.scale.setScalar(scale);
+            state.jumpForce = state.baseJumpForce * Math.max(0.5, scale);
+            let speed = state.baseSpeed;
+            if (state.activeEffects.has('slow')) speed *= 0.4;
+            speed *= Math.sqrt(scale);
+            state.normalSpeed = state.speed = speed;
+        }
+
+        function updateSkillsDisplay() {
+            const list = document.getElementById('skills-list');
+            list.innerHTML = '';
+            const names = { speed: '⚡ Vitesse', jump: '🦘 Saut', invisible: '👻 Invisibilité', size: '📏 Taille' };
+            const descriptions = {
+                speed: 'Vitesse de déplacement', jump: 'Hauteur de saut',
+                invisible: 'Transparence', size: 'Taille et saut'
+            };
+            
+            Object.entries(state.skills).forEach(([key, skill]) => {
+                const div = document.createElement('div');
+                div.className = 'skill-item';
+                div.innerHTML = `
+                    <div class="skill-header">
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <span style="color:${skill.color};font-size:24px">${names[key].split(' ')[0]}</span>
+                            <span style="font-size:16px;font-weight:bold">${names[key].split(' ')[1]}</span>
+                        </div>
+                        <button class="skill-toggle ${skill.enabled ? 'active' : 'inactive'}" onclick="toggleSkill('${key}')">
+                            ${skill.enabled ? 'ON' : 'OFF'}
+                        </button>
+                    </div>
+                    <div style="font-size:11px;margin-bottom:8px;opacity:0.7">${descriptions[key]}</div>
+                    <div style="font-size:13px;margin-bottom:5px">
+                        <strong>${skill.level}</strong> / ${skill.max} 
+                        ${skill.level >= skill.max ? '<span style="color:gold">⭐ MAX</span>' : ''}
+                    </div>
+                    <div class="skill-bar">
+                        <div class="skill-fill" style="width:${(skill.level / skill.max) * 100}%;background:${skill.enabled ? skill.color : '#666'}">
+                            ${Math.round((skill.level / skill.max) * 100)}%
+                        </div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function updateSkinsDisplay() {
+            const grid = document.getElementById('skins-grid');
+            grid.innerHTML = '';
+            Object.entries(SKINS).forEach(([id, skin]) => {
+                const isUnlocked = state.unlockedSkins.includes(id);
+                const isSelected = state.currentSkin === id;
+                const card = document.createElement('div');
+                card.className = `skin-card ${!isUnlocked ? 'locked' : ''} ${isSelected ? 'selected' : ''} ${(skin.rarity === 'secret' || skin.rarity === 'legendary') && isUnlocked ? 'hidden-skin' : ''}`;
+                if (isUnlocked) card.onclick = () => changeSkin(id);
+                card.innerHTML = `
+                    <div class="skin-icon">${isUnlocked ? skin.icon : '🔒'}</div>
+                    <div class="skin-name">${isUnlocked ? skin.name : '???'}</div>
+                    ${isUnlocked ? `<span class="skin-rarity rarity-${skin.rarity}">${skin.rarity}</span>` : ''}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleSkill(skillName) {
+            const skill = state.skills[skillName];
+            skill.enabled = !skill.enabled;
+            updateSkillsDisplay();
+            applySkillEffects();
+            showNotification(`${skill.enabled ? '✅' : '❌'} ${skillName}`, skill.enabled ? `linear-gradient(90deg,${skill.color},#333)` : '#666');
+        }
+
+        function openSkills() {
+            document.getElementById('skills-panel').classList.add('show');
+            document.getElementById('skills-backdrop').classList.add('show');
+            document.getElementById('skins-panel').classList.remove('show');
+            updateSkillsDisplay();
+        }
+
+        function openSkins() {
+            document.getElementById('skins-panel').classList.add('show');
+            document.getElementById('skills-backdrop').classList.add('show');
+            document.getElementById('skills-panel').classList.remove('show');
+            updateSkinsDisplay();
+        }
+
+        function closeAllPanels() {
+            document.getElementById('skills-panel').classList.remove('show');
+            document.getElementById('skins-panel').classList.remove('show');
+            document.getElementById('skills-backdrop').classList.remove('show');
+            document.getElementById('settings-menu').classList.remove('show');
+        }
+
+        function toggleSettings() {
+            document.getElementById('settings-menu').classList.toggle('show');
+        }
+
+        function getGroundHeight(x, z, currentY, velocityY) {
+            const terrainH = getHeightAt(x, z);
+            let candidateHeight = terrainH;
+            for (const platform of parkourPlatforms) {
+                const dx = x - platform.position.x, dz = z - platform.position.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist < platform.userData.radius) {
+                    const platformTop = platform.userData.topY;
+                    const isFalling = velocityY <= 0;
+                    if ((currentY >= platformTop - 0.5 && isFalling) || (Math.abs(currentY - platformTop) < 2 && Math.abs(velocityY) < 0.1)) {
+                        if (platformTop > candidateHeight) candidateHeight = platformTop;
+                    }
+                }
+            }
+            return candidateHeight + (0.7 * state.currentScale);
+        }
+
+        function checkCollisions() {
+            const charPos = character.mesh.position;
+            
+            // Collectibles
+            for (let i = collectibles.length - 1; i >= 0; i--) {
+                const obj = collectibles[i];
+                if (!obj || !obj.userData || obj.userData.collected) continue;
+                const hitboxSize = 4.5 * state.currentScale;
+                const dy = Math.abs(charPos.y - obj.position.y);
+                const horizontalDist = Math.sqrt(Math.pow(charPos.x - obj.position.x, 2) + Math.pow(charPos.z - obj.position.z, 2));
+                
+                if (horizontalDist < hitboxSize && dy < 4 * state.currentScale) {
+                    obj.userData.collected = true;
+                    collectedBoosts.add(obj.userData.id);
+                    const effect = obj.userData.type;
+                    
+                    if (effect.isSkill) {
+                        showNotification(`${effect.desc}`, `linear-gradient(135deg,#${effect.color.toString(16).padStart(6,'0')},#333)`);
+                        addSkillLevel(effect.skill, 1);
+                    } else {
+                        showNotification(`${effect.desc}`, `linear-gradient(135deg,#${effect.color.toString(16).padStart(6,'0')},#ff0000)`);
+                        const endTime = Date.now() + effect.duration;
+                        state.activeEffects.set(effect.effect, { endTime, type: effect });
+                        setTimeout(() => {
+                            state.activeEffects.delete(effect.effect);
+                            recalculateCurrentStats();
+                        }, effect.duration);
+                        recalculateCurrentStats();
+                    }
+                    scene.remove(obj);
+                    collectibles.splice(i, 1);
+                }
+            }
+            
+            // Skin orbs
+            for (let i = hiddenSkinOrbs.length - 1; i >= 0; i--) {
+                const orb = hiddenSkinOrbs[i];
+                if (!orb || !orb.userData) continue;
+                if (charPos.distanceTo(orb.position) < 3) {
+                    unlockSkin(orb.userData.skinId);
+                    scene.remove(orb);
+                    hiddenSkinOrbs.splice(i, 1);
+                }
+            }
+            
+            // Parkour
+            parkourZones.forEach(zone => {
+                if (zone.collected) return;
+                if (charPos.distanceTo(new THREE.Vector3(zone.finalX, zone.finalY + 4, zone.finalZ)) < 8) {
+                    zone.collected = true;
+                    if (zone.rewardOrb) scene.remove(zone.rewardOrb);
+                    if (!state.unlockedSkins.includes('golden')) unlockSkin('golden');
+                    showNotification('🏆 +5 NIVEAUX!', 'linear-gradient(135deg,#ffd700,#ff8c00)');
+                    Object.keys(state.skills).forEach(skill => addSkillLevel(skill, 5));
+                }
+            });
+        }
+
+        function updateCharacter() {
+            const char = character.mesh;
+            let moved = false;
+            
+            if (joystick.active) {
+                const rotationInput = joystick.deltaX / joystick.maxRadius;
+                state.characterRotation -= rotationInput * state.rotationSpeed * 2;
+                
+                const moveInput = -joystick.deltaY / joystick.maxRadius;
+                if (Math.abs(moveInput) > 0.1) {
+                    const moveSpeed = state.speed * Math.abs(moveInput);
+                    if (moveInput > 0) {
+                        char.position.x -= Math.sin(state.characterRotation) * moveSpeed;
+                        char.position.z -= Math.cos(state.characterRotation) * moveSpeed;
+                    } else {
+                        char.position.x += Math.sin(state.characterRotation) * moveSpeed;
+                        char.position.z += Math.cos(state.characterRotation) * moveSpeed;
+                    }
+                    moved = true;
+                }
+            }
+            
+            char.rotation.y = state.characterRotation;
+            
+            if (state.isJumping && isGrounded) {
+                jumpVelocity = state.jumpForce;
+                isGrounded = false;
+                state.isJumping = false;
+            }
+            
+            if (!isGrounded) jumpVelocity -= 0.015;
+            
+            let newY = char.position.y;
+            if (!isGrounded || jumpVelocity > 0) newY += jumpVelocity;
+            
+            const groundY = getGroundHeight(char.position.x, char.position.z, char.position.y, jumpVelocity);
+            
+            if (newY <= groundY) {
+                if (!isGrounded && jumpVelocity < 0) {
+                    isGrounded = true;
+                    jumpVelocity = 0;
+                }
+                newY = groundY;
+                isGrounded = true;
+            } else {
+                isGrounded = false;
+            }
+            
+            char.position.y = newY;
+            
+            if (moved && isGrounded) {
+                walkCycle += 0.15;
+                character.leftArmGroup.rotation.x = Math.sin(walkCycle) * 0.6;
+                character.rightArmGroup.rotation.x = Math.sin(walkCycle + Math.PI) * 0.6;
+                character.leftLegGroup.rotation.x = Math.sin(walkCycle + Math.PI) * 0.6;
+                character.rightLegGroup.rotation.x = Math.sin(walkCycle) * 0.6;
+            } else {
+                character.leftArmGroup.rotation.x *= 0.85;
+                character.rightArmGroup.rotation.x *= 0.85;
+                character.leftLegGroup.rotation.x *= 0.85;
+                character.rightLegGroup.rotation.x *= 0.85;
+            }
+            
+            const camDistance = Math.min(14 * state.currentScale, 30);
+            const camHeight = Math.min(10 * state.currentScale, 20);
+            const targetPos = char.position.clone();
+            targetPos.x += Math.sin(state.characterRotation) * camDistance;
+            targetPos.z += Math.cos(state.characterRotation) * camDistance;
+            targetPos.y += camHeight;
+            camera.position.lerp(targetPos, 0.08);
+            camera.lookAt(char.position.x, char.position.y + 2 * Math.min(state.currentScale, 3), char.position.z);
+        }
+
+        function updateCollectibles() {
+            const time = Date.now();
+            collectibles.forEach((obj, i) => {
+                if (!obj) return;
+                obj.position.y = obj.userData.originalY + Math.sin(time * obj.userData.bobSpeed + i) * 0.4;
+                obj.rotation.y += obj.userData.rotationSpeed;
+            });
+            for (let i = collectibles.length - 1; i >= 0; i--) {
+                if (collectibles[i] && collectibles[i].position.distanceTo(character.mesh.position) > 150) {
+                    scene.remove(collectibles[i]);
+                    collectibles.splice(i, 1);
+                }
+            }
+        }
+
+        function updateHiddenSkins() {
+            const time = Date.now();
+            hiddenSkinOrbs.forEach(orb => {
+                orb.rotation.y += orb.userData.rotationSpeed;
+                orb.rotation.z += orb.userData.rotationSpeed * 0.5;
+                if (orb.userData.floating) orb.position.y = orb.userData.originalY + Math.sin(time * 0.001) * 2;
+                else orb.position.y = orb.userData.originalY + Math.sin(time * 0.002) * 0.5;
+                if (orb.userData.aura) orb.userData.aura.rotation.z += 0.02;
+            });
+        }
+
+        function updateClouds() {
+            clouds.children.forEach(cloud => {
+                cloud.position.x += 0.015;
+                if (cloud.position.x > 200) cloud.position.x = -200;
+            });
+        }
+
+        function updateActiveBoosts() {
+            const container = document.getElementById('active-boosts');
+            container.innerHTML = '';
+            state.activeEffects.forEach((data, effectType) => {
+                const remaining = Math.ceil((data.endTime - Date.now()) / 1000);
+                if (remaining > 0) {
+                    const boost = boostTypes.find(b => b.effect === effectType);
+                    const div = document.createElement('div');
+                    div.className = 'boost-indicator malus-indicator';
+                    div.style.borderColor = '#' + boost.color.toString(16).padStart(6, '0');
+                    const icons = { slow: '🐌', tiny: '🔽', giant: '🔼' };
+                    div.innerHTML = `<span style="font-size:16px">${icons[effectType]}</span><div style="flex:1"><div style="font-weight:bold">${boost.name}</div></div><span>${remaining}s</span>`;
+                    container.appendChild(div);
+                }
+            });
+        }
+
+        let lastCollectibleSpawn = 0, lastTerrainUpdate = 0, frameCount = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (!state.isPlaying) return;
+            
+            const now = Date.now();
+            
+            // Update terrain (throttled)
+            if (now - lastTerrainUpdate > 100) {
+                lastTerrainUpdate = now;
+                const px = character.mesh.position.x, pz = character.mesh.position.z;
+                const gridSize = 200 / 128;
+                const snapX = Math.floor(px / gridSize) * gridSize;
+                const snapZ = Math.floor(pz / gridSize) * gridSize;
+                if (Math.abs(terrainMesh.position.x - snapX) > 60 || Math.abs(terrainMesh.position.z - snapZ) > 60) {
+                    terrainMesh.position.x = snapX;
+                    terrainMesh.position.z = snapZ;
+                    const vertices = terrainMesh.geometry.attributes.position.array;
+                    for (let i = 0; i < vertices.length; i += 3) {
+                        vertices[i + 2] = getHeightAt(vertices[i] + snapX, vertices[i + 1] + snapZ);
+                    }
+                    terrainMesh.geometry.attributes.position.needsUpdate = true;
+                    terrainMesh.geometry.computeVertexNormals();
+                }
+            }
+            
+            updateCharacter();
+            updateCollectibles();
+            updateClouds();
+            updateHiddenSkins();
+            checkCollisions();
+            updateActiveBoosts();
+            
+            if (now - lastCollectibleSpawn > 6000 && collectibles.length < 15) {
+                spawnCollectibles();
+                lastCollectibleSpawn = now;
+            }
+            
+            renderer.render(scene, camera);
+            frameCount++;
+        }
+
+        // Setup Joystick
+        function setupJoystick() {
+            const zone = document.getElementById('joystick-zone');
+            const knob = document.getElementById('joystick-knob');
+            
+            const handleStart = (e) => {
+                e.preventDefault();
+                joystick.active = true;
+                knob.classList.add('active');
+                updateJoystickPosition(e);
+            };
+            
+            const handleMove = (e) => {
+                if (!joystick.active) return;
+                e.preventDefault();
+                updateJoystickPosition(e);
+            };
+            
+            const handleEnd = (e) => {
+                e.preventDefault();
+                joystick.active = false;
+                joystick.deltaX = 0;
+                joystick.deltaY = 0;
+                knob.classList.remove('active');
+                knob.style.left = '50%';
+                knob.style.top = '50%';
+                knob.style.transform = 'translate(-50%, -50%)';
+            };
+            
+            const updateJoystickPosition = (e) => {
+                const rect = zone.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                let deltaX = clientX - centerX;
+                let deltaY = clientY - centerY;
+                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                if (distance > joystick.maxRadius) {
+                    const ratio = joystick.maxRadius / distance;
+                    deltaX *= ratio;
+                    deltaY *= ratio;
+                }
+                joystick.deltaX = deltaX;
+                joystick.deltaY = deltaY;
+                knob.style.left = (50 + (deltaX / rect.width) * 100) + '%';
+                knob.style.top = (50 + (deltaY / rect.height) * 100) + '%';
+                knob.style.transform = 'translate(-50%, -50%)';
+            };
+            
+            zone.addEventListener('touchstart', handleStart, { passive: false });
+            zone.addEventListener('touchmove', handleMove, { passive: false });
+            zone.addEventListener('touchend', handleEnd, { passive: false });
+            zone.addEventListener('touchcancel', handleEnd, { passive: false });
+            zone.addEventListener('mousedown', handleStart);
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('mouseup', handleEnd);
+        }
+
+        function setupControls() {
+            setupJoystick();
+            
+            document.getElementById('jump-btn').addEventListener('touchstart', (e) => { 
+                e.preventDefault(); 
+                if (isGrounded) state.isJumping = true; 
+            }, { passive: false });
+            
+            document.getElementById('jump-btn').addEventListener('mousedown', (e) => { 
+                e.preventDefault(); 
+                if (isGrounded) state.isJumping = true; 
+            });
+            
+            document.addEventListener('keydown', (e) => {
+                if (!state.isPlaying) return;
+                switch(e.key) {
+                    case 'ArrowLeft': case 'a': case 'A': joystick.deltaX = -joystick.maxRadius; joystick.active = true; break;
+                    case 'ArrowRight': case 'd': case 'D': joystick.deltaX = joystick.maxRadius; joystick.active = true; break;
+                    case 'ArrowUp': case 'w': case 'W': joystick.deltaY = -joystick.maxRadius; joystick.active = true; break;
+                    case 'ArrowDown': case 's': case 'S': joystick.deltaY = joystick.maxRadius; joystick.active = true; break;
+                    case ' ': if (isGrounded) state.isJumping = true; break;
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                if (['ArrowLeft','a','A','ArrowRight','d','D','ArrowUp','w','W','ArrowDown','s','S'].includes(e.key)) {
+                    joystick.active = false;
+                    joystick.deltaX = 0;
+                    joystick.deltaY = 0;
+                    const knob = document.getElementById('joystick-knob');
+                    knob.style.left = '50%';
+                    knob.style.top = '50%';
+                    knob.style.transform = 'translate(-50%, -50%)';
+                }
+            });
+            
+            document.getElementById('settings-btn').addEventListener('click', toggleSettings);
+            document.getElementById('menu-main-btn').addEventListener('click', () => location.reload());
+            document.getElementById('menu-skills-btn').addEventListener('click', () => { toggleSettings(); openSkills(); });
+            document.getElementById('menu-skins-btn').addEventListener('click', () => { toggleSettings(); openSkins(); });
+            document.getElementById('menu-share-btn').addEventListener('click', () => { toggleSettings(); openShare(); });
+            document.getElementById('menu-install-btn').addEventListener('click', () => { toggleSettings(); installApp(); });
+            document.getElementById('menu-close-btn').addEventListener('click', toggleSettings);
+            
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAllPanels(); });
+        }
+
+        // Start Game
+        document.getElementById('start-btn').addEventListener('click', () => {
+            // Hide loading
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('instructions').classList.add('hidden');
+            document.getElementById('joystick-zone').classList.remove('hidden');
+            document.getElementById('jump-btn').classList.remove('hidden');
+            document.getElementById('settings-btn').classList.remove('hidden');
+            document.getElementById('share-btn-header').classList.remove('hidden');
+            document.getElementById('fullscreen-btn').classList.remove('hidden');
+            
+            state.isPlaying = true;
+            
+            generateSeamlessTerrain();
+            character = createCharacter();
+            scene.add(character.mesh);
+            clouds = createClouds();
+            spawnParkourZones();
+            spawnHiddenSkins();
+            spawnCollectibles();
+            applySkillEffects();
+            recalculateCurrentStats();
+            
+            camera.position.set(0, 15, 25);
+            
+            // Try fullscreen on mobile
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                setTimeout(() => {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                }, 1000);
+            }
+        });
+
+        // Initialize
+        setupControls();
+        animate();
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Prevent zoom on double tap
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) e.preventDefault();
+            lastTouchEnd = now;
+        }, { passive: false });
+
+        // Prevent context menu
+        document.addEventListener('contextmenu', e => e.preventDefault());
+    </script>
+</body>
+</html>
